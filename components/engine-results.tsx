@@ -1,10 +1,57 @@
 'use client'
 
-import { useState, useMemo, type CSSProperties, type ReactNode } from 'react'
+import { useState, useMemo, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import type { LiveRow, PlatformStatus } from '@/lib/engine'
 
 const PLATFORM_ORDER = ['spothero', 'parkwhiz', 'way']
 const platLabel = (p: string) => p.charAt(0).toUpperCase() + p.slice(1)
+
+/** Live elapsed-ms ticker while `running` is true; freezes at the final value after. */
+export function useElapsed(running: boolean) {
+  const [ms, setMs] = useState(0)
+  const start = useRef(0)
+  useEffect(() => {
+    if (!running) return
+    start.current = Date.now()
+    setMs(0)
+    const id = setInterval(() => setMs(Date.now() - start.current), 100)
+    return () => clearInterval(id)
+  }, [running])
+  return ms
+}
+
+export const fmtSecs = (ms: number) => `${(ms / 1000).toFixed(1)}s`
+
+/** Toggle which platforms a fetch queries. Default all on; Way is the slow leg. */
+export function PlatformSelect({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const toggle = (k: string) => onChange(value.includes(k) ? value.filter((x) => x !== k) : [...value, k])
+  return (
+    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-2)' }}>Platforms</span>
+      {PLATFORM_ORDER.map((k) => {
+        const on = value.includes(k)
+        return (
+          <button
+            key={k} type="button" onClick={() => toggle(k)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '7px 12px', borderRadius: '10px',
+              border: '1px solid var(--border)', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+              background: on ? 'color-mix(in srgb, var(--blue) 12%, var(--surface))' : 'var(--surface)',
+              color: on ? 'var(--text)' : 'var(--text-2)', opacity: on ? 1 : 0.6,
+            }}
+          >
+            <span style={{
+              width: '15px', height: '15px', borderRadius: '4px', display: 'grid', placeItems: 'center', fontSize: '10px',
+              border: on ? 'none' : '1px solid var(--border)', background: on ? 'var(--blue)' : 'transparent', color: '#fff',
+            }}>{on ? '✓' : ''}</span>
+            {platLabel(k)}
+            {k === 'way' && <span style={{ fontSize: '10px', color: 'var(--text-2)', opacity: 0.8 }}>(slow)</span>}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 import { exportXlsx, copyRowsTsv } from '@/lib/engine'
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {

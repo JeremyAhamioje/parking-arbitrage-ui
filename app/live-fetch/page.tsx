@@ -2,28 +2,33 @@
 
 import { useState } from 'react'
 import { Header } from '@/components/header'
-import { PlatformChips, ResultsTable } from '@/components/engine-results'
+import { PlatformChips, ResultsTable, PlatformSelect, useElapsed, fmtSecs } from '@/components/engine-results'
 import { liveEvent, type LiveResult } from '@/lib/engine'
 
 export default function LiveFetchPage() {
   const [venue, setVenue] = useState('')
   const [event, setEvent] = useState('')
   const [date, setDate] = useState('')
+  const [platforms, setPlatforms] = useState<string[]>(['spothero', 'parkwhiz', 'way'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<LiveResult | null>(null)
+  const [tookMs, setTookMs] = useState<number | null>(null)
+  const elapsed = useElapsed(loading)
 
   const run = async (eventOverride?: string) => {
     const ev = eventOverride ?? event
     if (!venue.trim() || !ev.trim()) { setError('Enter both a venue and an event.'); return }
+    if (!platforms.length) { setError('Select at least one platform.'); return }
     if (eventOverride) setEvent(eventOverride)
-    setLoading(true); setError(null)
+    setLoading(true); setError(null); setTookMs(null)
+    const t0 = Date.now()
     try {
-      const r = await liveEvent({ venue: venue.trim(), event: ev.trim(), date: date || undefined })
+      const r = await liveEvent({ venue: venue.trim(), event: ev.trim(), date: date || undefined, platforms })
       setResult(r)
     } catch (e: any) {
       setError(e.message || 'Fetch failed'); setResult(null)
-    } finally { setLoading(false) }
+    } finally { setLoading(false); setTookMs(Date.now() - t0) }
   }
 
   return (
@@ -43,6 +48,9 @@ export default function LiveFetchPage() {
             <Field label="Event" placeholder="Taylor Swift" value={event} onChange={setEvent} onEnter={() => run()} />
             <Field label="Date (optional)" type="date" value={date} onChange={setDate} onEnter={() => run()} />
           </div>
+          <div style={{ marginBottom: '16px' }}>
+            <PlatformSelect value={platforms} onChange={setPlatforms} />
+          </div>
           <button onClick={() => run()} disabled={loading}
             style={{ padding: '11px 26px', borderRadius: '11px', border: 'none', background: 'var(--blue)', color: '#fff', fontWeight: 600, fontSize: '14px', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
             {loading ? 'Fetching…' : 'Fetch'}
@@ -54,13 +62,19 @@ export default function LiveFetchPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '18px 22px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--surface)', marginBottom: '24px' }}>
             <Spinner />
             <span style={{ fontSize: '14px', color: 'var(--text-2)' }}>
-              Searching live across SpotHero, Way &amp; ParkWhiz — Way clears Cloudflare so this can take up to a minute.
+              Searching {platforms.map((p) => p[0].toUpperCase() + p.slice(1)).join(', ')} … <strong style={{ color: 'var(--text)' }}>{fmtSecs(elapsed)}</strong>
+              {platforms.includes('way') && <> · Way clears Cloudflare, so it&apos;s the slow leg</>}
             </span>
           </div>
         )}
 
         {result && !loading && (
           <>
+            {tookMs != null && (
+              <div style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '12px' }}>
+                Fetched in <strong style={{ color: 'var(--text)' }}>{fmtSecs(tookMs)}</strong>
+              </div>
+            )}
             <PlatformChips platforms={result.platforms} onPickCandidate={(title) => run(title)} />
             {result.summary.needsConfirmation && (
               <div style={{ background: 'color-mix(in srgb, var(--yellow) 14%, var(--surface))', border: '1px solid color-mix(in srgb, var(--yellow) 40%, var(--border))', borderRadius: '12px', padding: '12px 16px', marginBottom: '18px', fontSize: '13px', color: '#806600' }}>

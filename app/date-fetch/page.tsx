@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react'
 import { Header } from '@/components/header'
-import { PlatformChips, ResultsTable } from '@/components/engine-results'
+import { PlatformChips, ResultsTable, PlatformSelect, useElapsed, fmtSecs } from '@/components/engine-results'
 import { liveDate, type LiveResult } from '@/lib/engine'
 
 // add hours to a 'YYYY-MM-DDTHH:mm' datetime-local string
@@ -19,9 +19,12 @@ export default function DateFetchPage() {
   const [venue, setVenue] = useState('')
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
+  const [platforms, setPlatforms] = useState<string[]>(['spothero', 'parkwhiz', 'way'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<LiveResult | null>(null)
+  const [tookMs, setTookMs] = useState<number | null>(null)
+  const elapsed = useElapsed(loading)
 
   const onStartChange = (v: string) => {
     setStart(v)
@@ -31,12 +34,14 @@ export default function DateFetchPage() {
   const run = async () => {
     if (!venue.trim() || !start || !end) { setError('Enter a venue, a start time, and an end time.'); return }
     if (start >= end) { setError('End time must be after the start time.'); return }
-    setLoading(true); setError(null)
+    if (!platforms.length) { setError('Select at least one platform.'); return }
+    setLoading(true); setError(null); setTookMs(null)
+    const t0 = Date.now()
     try {
-      setResult(await liveDate({ venue: venue.trim(), start, end }))
+      setResult(await liveDate({ venue: venue.trim(), start, end, platforms }))
     } catch (e: any) {
       setError(e.message || 'Fetch failed'); setResult(null)
-    } finally { setLoading(false) }
+    } finally { setLoading(false); setTookMs(Date.now() - t0) }
   }
 
   return (
@@ -60,6 +65,9 @@ export default function DateFetchPage() {
             <DateTimeField label="Start" value={start} onChange={onStartChange} />
             <DateTimeField label="End" value={end} onChange={setEnd} minDate={start ? start.slice(0, 10) : undefined} />
           </div>
+          <div style={{ marginBottom: '16px' }}>
+            <PlatformSelect value={platforms} onChange={setPlatforms} />
+          </div>
           <button onClick={run} disabled={loading}
             style={{ padding: '11px 26px', borderRadius: '11px', border: 'none', background: 'var(--blue)', color: '#fff', fontWeight: 600, fontSize: '14px', cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1 }}>
             {loading ? 'Fetching…' : 'Fetch'}
@@ -72,12 +80,19 @@ export default function DateFetchPage() {
             <span style={{ width: '18px', height: '18px', border: '2px solid var(--border)', borderTopColor: 'var(--blue)', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>
               <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
             </span>
-            <span style={{ fontSize: '14px', color: 'var(--text-2)' }}>Fetching inventory for {start?.replace('T', ' ')} → {end?.replace('T', ' ')}…</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-2)' }}>
+              Fetching {platforms.map((p) => p[0].toUpperCase() + p.slice(1)).join(', ')} for {start?.replace('T', ' ')} → {end?.replace('T', ' ')} … <strong style={{ color: 'var(--text)' }}>{fmtSecs(elapsed)}</strong>
+            </span>
           </div>
         )}
 
         {result && !loading && (
           <>
+            {tookMs != null && (
+              <div style={{ fontSize: '13px', color: 'var(--text-2)', marginBottom: '12px' }}>
+                Fetched in <strong style={{ color: 'var(--text)' }}>{fmtSecs(tookMs)}</strong>
+              </div>
+            )}
             <PlatformChips platforms={result.platforms} />
             <ResultsTable rows={result.rows} filename={`inventory_${venue}_${start}`.replace(/\s+/g, '-')} emptyText="No inventory found for that time period." />
           </>
