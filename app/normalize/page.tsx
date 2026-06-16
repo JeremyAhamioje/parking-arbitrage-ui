@@ -98,7 +98,7 @@ export default function NormalizePage() {
     <main style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh' }}>
       <Header />
       <div className="wrap" style={{ paddingTop: '56px', paddingBottom: '80px' }}>
-        <h1 style={{ fontSize: '42px', fontWeight: 700, marginBottom: '8px', letterSpacing: '-1.5px' }}>Sheet Normalizer</h1>
+        <h1 style={{ fontSize: '42px', fontWeight: 700, marginBottom: '8px', letterSpacing: '-1.5px' }}>Context Aware Sheet Processing</h1>
         <p style={{ color: 'var(--text-2)', marginBottom: '32px', fontSize: '16px', maxWidth: '720px' }}>
           Upload a messy XLSX or CSV. The engine auto-detects your columns, fetches live parking per row,
           and matches it back with a confidence score. Your original columns are never overwritten — enriched

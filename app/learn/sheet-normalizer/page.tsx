@@ -5,10 +5,10 @@ export default function SheetNormalizerArticle() {
   return (
     <ArticleShell
       tag="Action Tool"
-      title="Sheet Normalizer"
+      title="Context Aware Sheet Processing"
       intro="Upload a messy XLSX or CSV. The engine auto-detects your columns, fetches live parking per row, and appends enriched data with a confidence score — never overwriting your originals."
       image={IMG.sheetNormalizer}
-      ctaLabel="Open Sheet Normalizer"
+      ctaLabel="Open Context Aware Sheet Processing"
       ctaHref="/normalize"
       steps={[
         { title: 'Upload your sheet', body: 'Drop an XLSX, XLS, or CSV file. Messy, abbreviated, or out-of-order headers are welcome.' },

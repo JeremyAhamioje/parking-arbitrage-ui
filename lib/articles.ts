@@ -41,7 +41,7 @@ export const ARTICLES: Article[] = [
   },
   {
     slug: 'sheet-normalizer',
-    title: 'Sheet Normalizer',
+    title: 'Context Aware Sheet Processing',
     tag: 'Action Tool',
     desc: 'Upload a messy sheet — the engine auto-detects columns, fetches live prices per row, and appends enriched data without overwriting yours.',
     image: IMG.sheetNormalizer,

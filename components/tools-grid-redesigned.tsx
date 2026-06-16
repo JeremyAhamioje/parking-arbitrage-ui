@@ -35,7 +35,7 @@ const TOOLS: Tool[] = [
   },
   {
     id: 'normalizer',
-    name: 'Sheet Normalizer',
+    name: 'Context Aware Sheet Processing',
     desc: 'Upload a messy XLSX or CSV. Auto-detects your columns, fetches live parking per row, and matches it back with Gemini — appending enriched columns without overwriting your data.',
     image: 'https://res.cloudinary.com/dz6kxumoo/image/upload/v1781430979/Gemini_Generated_Image_29yf4p29yf4p29yf_idogxw.png',
     status: 'live' as const,

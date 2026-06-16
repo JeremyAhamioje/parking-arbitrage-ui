@@ -133,10 +133,9 @@ export function PlatformChips({
 const COLUMNS: { key: keyof LiveRow; label: string; align?: 'right' }[] = [
   { key: 'platform', label: 'Platform' },
   { key: 'spot', label: 'Parking Spot' },
-  { key: 'address', label: 'Address' },
+  { key: 'address', label: 'Distance to venue' },
   { key: 'price', label: 'Price', align: 'right' },
   { key: 'availability', label: 'Availability' },
-  { key: 'distanceMiles', label: 'Distance', align: 'right' },
   { key: 'event', label: 'Event' },
   { key: 'date', label: 'Date' },
   { key: 'confidence', label: 'Conf.', align: 'right' },
@@ -239,7 +238,7 @@ export function ResultsTable({
                 <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                   {COLUMNS.map((c) => (
                     <td key={String(c.key)} style={{ textAlign: c.align || 'left', padding: '10px 12px', color: 'var(--text)', whiteSpace: c.key === 'address' ? 'normal' : 'nowrap' }}>
-                      {fmt(c.key, r[c.key])}
+                      {c.key === 'address' ? locationLine(r) : fmt(c.key, r[c.key])}
                     </td>
                   ))}
                 </tr>
@@ -272,6 +271,17 @@ function SortBtn({ active, onClick, children }: { active: boolean; onClick: () =
       background: active ? 'var(--blue)' : 'var(--surface)', color: active ? '#fff' : 'var(--text-2)',
     }}>{children}</button>
   )
+}
+
+// "1101 S State St. - 0.9 miles/21 minutes to the venue" — address + walking
+// distance + estimated walk time (~urban pace; ≈21 min per 0.9 mi).
+function locationLine(r: LiveRow) {
+  const base = r.address || r.spot || '—'
+  const m = r.distanceMeters
+  if (m == null) return base
+  const miles = (m / 1609.34).toFixed(1)
+  const mins = Math.round(m / 69)
+  return `${base} - ${miles} miles/${mins} minutes to the venue`
 }
 
 function fmt(key: keyof LiveRow, v: any) {
