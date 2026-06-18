@@ -10,6 +10,14 @@ interface Event {
   eventDate: string
   onSaleDate: string | null
   sourceUrl: string
+  status?: 'secure-early' | 'newly-announced' | 'on-sale-now' | 'upcoming'
+  daysUntilOnsale?: number | null
+}
+
+const STATUS_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
+  'secure-early':    { label: 'Secure early',    bg: '#fef3c7', fg: '#92400e' },
+  'newly-announced': { label: 'Newly announced', bg: '#dcfce7', fg: '#166534' },
+  'on-sale-now':     { label: 'On sale now',      bg: '#dbeafe', fg: '#1e40af' },
 }
 
 export default function EventsPage() {
@@ -93,6 +101,27 @@ export default function EventsPage() {
                   el.style.transform = 'none'
                 }}
               >
+                {event.status && STATUS_BADGE[event.status] && (
+                  <span
+                    style={{
+                      alignSelf: 'flex-start',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      padding: '4px 10px',
+                      borderRadius: '999px',
+                      background: STATUS_BADGE[event.status].bg,
+                      color: STATUS_BADGE[event.status].fg,
+                    }}
+                  >
+                    {STATUS_BADGE[event.status].label}
+                    {event.status === 'secure-early' && event.daysUntilOnsale != null
+                      ? ` · on sale in ${event.daysUntilOnsale}d`
+                      : ''}
+                  </span>
+                )}
+
                 <h3
                   style={{
                     fontSize: '16px',
