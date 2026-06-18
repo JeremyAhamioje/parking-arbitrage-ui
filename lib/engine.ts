@@ -2,8 +2,11 @@
 // Separate from NEXT_PUBLIC_API_URL (the read-only Supabase analytics API) —
 // this one runs the live Playwright fetches + sheet pipeline.
 
-export const ENGINE_URL =
-  process.env.NEXT_PUBLIC_ENGINE_URL || 'http://localhost:4000'
+// Every engine call goes through a same-origin Vercel proxy route
+// (app/api/engine/[...path]) that injects the engine origin + API key
+// server-side. So the browser only ever talks to the Vercel app over HTTPS —
+// no mixed-content, and the engine URL/key never reach the client.
+export const ENGINE_URL = '/api/engine'
 
 export interface LiveRow {
   platform: string
