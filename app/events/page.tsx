@@ -52,7 +52,7 @@ export default function EventsPage() {
           Discovered Events
         </h1>
         <p style={{ color: 'var(--text-2)', marginBottom: '48px', fontSize: '16px' }}>
-          Newly announced events from Ticketmaster at your tracked venues
+          Upcoming Ticketmaster events at your tracked venues — ranked by on-sale timing so you can secure parking before tickets drop
         </p>
 
         {loading ? (
