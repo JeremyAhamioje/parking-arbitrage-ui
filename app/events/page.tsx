@@ -12,6 +12,7 @@ interface Event {
   sourceUrl: string
   status?: 'secure-early' | 'newly-announced' | 'on-sale-now' | 'upcoming'
   daysUntilOnsale?: number | null
+  performanceCount?: number
 }
 
 const STATUS_BADGE: Record<string, { label: string; bg: string; fg: string }> = {
@@ -144,6 +145,9 @@ export default function EventsPage() {
                       day: 'numeric',
                       year: 'numeric',
                     })}
+                    {event.performanceCount && event.performanceCount > 1
+                      ? ` · +${event.performanceCount - 1} more date${event.performanceCount - 1 > 1 ? 's' : ''}`
+                      : ''}
                   </div>
                   {event.onSaleDate && (
                     <div>
