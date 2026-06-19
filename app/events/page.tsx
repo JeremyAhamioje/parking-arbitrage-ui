@@ -53,7 +53,7 @@ export default function EventsPage() {
           Discovered Events
         </h1>
         <p style={{ color: 'var(--text-2)', marginBottom: '48px', fontSize: '16px' }}>
-          Upcoming Ticketmaster events at your tracked venues — ranked by on-sale timing so you can secure parking before tickets drop
+          Upcoming events at your tracked venues, soonest first — every event is a parking opportunity. Watch for the “Secure early” tag when tickets haven’t dropped yet.
         </p>
 
         {loading ? (
@@ -149,16 +149,6 @@ export default function EventsPage() {
                       ? ` · +${event.performanceCount - 1} more date${event.performanceCount - 1 > 1 ? 's' : ''}`
                       : ''}
                   </div>
-                  {event.onSaleDate && (
-                    <div>
-                      <strong>Tickets On Sale:</strong>{' '}
-                      {new Date(event.onSaleDate).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </div>
-                  )}
                 </div>
 
                 <div
