@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/header'
 import { MetricsGrid } from '@/components/metrics-grid'
+import { EventPriceTrendsTable } from '@/components/event-price-trends-table'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -39,6 +40,7 @@ export default function WayDataPage() {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
   const [lots, setLots] = useState<WayLot[]>([])
   const [lotsLoading, setLotsLoading] = useState(false)
+  const [trendView, setTrendView] = useState<'lot' | 'event'>('lot')
 
   useEffect(() => {
     const fetchVenues = async () => {
@@ -102,127 +104,176 @@ export default function WayDataPage() {
         </p>
 
         {/* Metrics Grid — Way only */}
-        <section style={{ marginBottom: '40px' }}>
+        <section style={{ marginBottom: '32px' }}>
           <MetricsGrid source="way" />
         </section>
 
-        {/* Source notice — Way data has no event context */}
-        <section style={{ marginBottom: '60px' }}>
-          <div
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '14px',
-              padding: '18px 22px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              boxShadow: 'var(--shadow)',
-            }}
-          >
-            <span
-              aria-hidden
-              style={{
-                flexShrink: 0,
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                display: 'grid',
-                placeItems: 'center',
-                background: 'color-mix(in srgb, var(--blue) 14%, var(--surface))',
-                color: 'var(--blue)',
-                fontWeight: 700,
-              }}
-            >
-              i
-            </span>
-            <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.5 }}>
-              Way.com listings are generic hourly parking — no event-specific context yet. Pricing
-              reflects a standard hourly window per venue.
-            </p>
+        {/* By Lot / By Event toggle — mirrors the SpotHero data page */}
+        <section style={{ marginBottom: '28px' }}>
+          <div role="tablist" style={{ display: 'inline-flex', gap: '4px', padding: '4px', background: 'var(--pill)', borderRadius: '11px' }}>
+            {([
+              { key: 'lot', label: 'By Lot', hint: 'Per-venue standard hourly baseline' },
+              { key: 'event', label: 'By Event', hint: 'Per-event premium, volatility & ROI' },
+            ] as const).map(tab => {
+              const active = trendView === tab.key
+              return (
+                <button
+                  key={tab.key}
+                  role="tab"
+                  aria-selected={active}
+                  title={tab.hint}
+                  onClick={() => setTrendView(tab.key)}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '9px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    transition: 'background 0.18s, color 0.18s, box-shadow 0.18s',
+                    background: active ? 'var(--surface)' : 'transparent',
+                    color: active ? 'var(--text)' : 'var(--text-2)',
+                    boxShadow: active ? 'var(--shadow)' : 'none',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
           </div>
         </section>
 
-        {/* Venues Grid */}
-        <section>
-          <h2 style={{ fontSize: '28px', fontWeight: 600, marginBottom: '24px', letterSpacing: '-0.5px' }}>
-            Tracked Venues
-          </h2>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-2)' }}>
-              Loading venues...
-            </div>
-          ) : venues.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-2)' }}>
-              No Way.com venues found yet. Run <code>npm run scrape:way</code> to populate data.
-            </div>
-          ) : (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '18px',
-              }}
-            >
-              {venues.map((venue) => {
-                const cls = venue.classification ? CLASSIFICATION[venue.classification] : null
-                return (
-                  <div
-                    key={venue.id}
-                    onClick={() => handleVenueClick(venue)}
-                    style={{
-                      background: 'var(--surface)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '16px',
-                      padding: '20px',
-                      boxShadow: 'var(--shadow)',
-                      transition: 'box-shadow 0.25s, transform 0.25s',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      const el = e.currentTarget as HTMLElement
-                      el.style.boxShadow = 'var(--shadow-hover)'
-                      el.style.transform = 'translateY(-3px)'
-                    }}
-                    onMouseLeave={(e) => {
-                      const el = e.currentTarget as HTMLElement
-                      el.style.boxShadow = 'var(--shadow)'
-                      el.style.transform = 'none'
-                    }}
-                  >
-                    <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>
-                      {venue.name}
-                    </h3>
-                    <div style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: '1.6' }}>
-                      {typeof venue.avgPrice === 'number' && (
-                        <div style={{ marginBottom: '8px' }}>
-                          <strong>Avg price:</strong> ${venue.avgPrice.toFixed(2)}
+        {trendView === 'event' ? (
+          /* By Event — per-event premiums for Way only */
+          <section style={{ marginBottom: '60px' }}>
+            <p style={{ color: 'var(--text-2)', marginBottom: '24px', fontSize: '15px' }}>
+              How much pricier Way.com parking gets for a specific event at each venue, vs that lot&apos;s
+              normal-day baseline. Expand a venue, then an event, for the scrape-derived reasons.
+            </p>
+            <EventPriceTrendsTable source="way" />
+          </section>
+        ) : (
+          <>
+            {/* Source notice — what the By Lot view shows */}
+            <section style={{ marginBottom: '60px' }}>
+              <div
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '14px',
+                  padding: '18px 22px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  boxShadow: 'var(--shadow)',
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    flexShrink: 0,
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: 'color-mix(in srgb, var(--blue) 14%, var(--surface))',
+                    color: 'var(--blue)',
+                    fontWeight: 700,
+                  }}
+                >
+                  i
+                </span>
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.5 }}>
+                  <strong>By Lot</strong> shows Way.com&apos;s standard hourly baseline for each venue.
+                  Switch to <strong>By Event</strong> for per-event premiums — how much pricier parking gets for
+                  a specific show vs a normal day.
+                </p>
+              </div>
+            </section>
+
+            {/* Venues Grid */}
+            <section>
+              <h2 style={{ fontSize: '28px', fontWeight: 600, marginBottom: '24px', letterSpacing: '-0.5px' }}>
+                Tracked Venues
+              </h2>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-2)' }}>
+                  Loading venues...
+                </div>
+              ) : venues.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-2)' }}>
+                  No Way.com venues found yet. Run <code>npm run scrape:way</code> to populate data.
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: '18px',
+                  }}
+                >
+                  {venues.map((venue) => {
+                    const cls = venue.classification ? CLASSIFICATION[venue.classification] : null
+                    return (
+                      <div
+                        key={venue.id}
+                        onClick={() => handleVenueClick(venue)}
+                        style={{
+                          background: 'var(--surface)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          boxShadow: 'var(--shadow)',
+                          transition: 'box-shadow 0.25s, transform 0.25s',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          const el = e.currentTarget as HTMLElement
+                          el.style.boxShadow = 'var(--shadow-hover)'
+                          el.style.transform = 'translateY(-3px)'
+                        }}
+                        onMouseLeave={(e) => {
+                          const el = e.currentTarget as HTMLElement
+                          el.style.boxShadow = 'var(--shadow)'
+                          el.style.transform = 'none'
+                        }}
+                      >
+                        <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '12px', color: 'var(--text)' }}>
+                          {venue.name}
+                        </h3>
+                        <div style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: '1.6' }}>
+                          {typeof venue.avgPrice === 'number' && (
+                            <div style={{ marginBottom: '8px' }}>
+                              <strong>Avg price:</strong> ${venue.avgPrice.toFixed(2)}
+                            </div>
+                          )}
+                          {cls && (
+                            <div>
+                              <strong>Status:</strong>{' '}
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  background: cls.bg,
+                                  color: cls.color,
+                                }}
+                              >
+                                {cls.label}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {cls && (
-                        <div>
-                          <strong>Status:</strong>{' '}
-                          <span
-                            style={{
-                              display: 'inline-block',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              background: cls.bg,
-                              color: cls.color,
-                            }}
-                          >
-                            {cls.label}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
 
       {/* Lots Modal — Way listings for the selected venue (no events) */}

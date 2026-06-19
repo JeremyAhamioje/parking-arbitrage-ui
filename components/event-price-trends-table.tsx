@@ -170,7 +170,9 @@ function VolCell({ vol, multiScrape }: { vol: number; multiScrape: boolean }) {
   return <span style={{ fontSize: '13px', fontWeight: 600, color: volColor(vol) }}>{(vol * 100).toFixed(0)}%</span>
 }
 
-export function EventPriceTrendsTable() {
+// `source` scopes the table to one platform (spothero | parkwhiz | way). Omit it
+// on the SpotHero page to show all platforms blended (the original behaviour).
+export function EventPriceTrendsTable({ source }: { source?: string } = {}) {
   const [venues, setVenues] = useState<VenueRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -184,7 +186,8 @@ export function EventPriceTrendsTable() {
     const run = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-        const res = await fetch(`${apiUrl}/api/event-stats`)
+        const qs = source ? `?source=${encodeURIComponent(source)}` : ''
+        const res = await fetch(`${apiUrl}/api/event-stats${qs}`)
         if (!res.ok) throw new Error('Failed to fetch')
         const data = await res.json()
         setVenues(data.venues || [])
@@ -198,7 +201,7 @@ export function EventPriceTrendsTable() {
       }
     }
     run()
-  }, [])
+  }, [source])
 
   const toggle = (id: string) =>
     setExpanded(prev => {
