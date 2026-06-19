@@ -12,6 +12,7 @@ interface Event {
   sourceUrl: string
   status?: 'secure-early' | 'newly-announced' | 'on-sale-now' | 'upcoming'
   daysUntilOnsale?: number | null
+  onsaleTBD?: boolean
   performanceCount?: number
 }
 
@@ -53,7 +54,7 @@ export default function EventsPage() {
           Discovered Events
         </h1>
         <p style={{ color: 'var(--text-2)', marginBottom: '48px', fontSize: '16px' }}>
-          Upcoming events at your tracked venues, soonest first — every event is a parking opportunity. Watch for the “Secure early” tag when tickets haven’t dropped yet.
+          Events whose tickets aren’t on sale yet — your window to secure parking before they drop and demand spikes.
         </p>
 
         {loading ? (
@@ -62,7 +63,7 @@ export default function EventsPage() {
           </div>
         ) : events.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-2)' }}>
-            No events found. Run event discovery to populate data.
+            No upcoming on-sales right now. New shows will appear here as venues announce them and tickets are scheduled to drop.
           </div>
         ) : (
           <div
@@ -149,6 +150,18 @@ export default function EventsPage() {
                       ? ` · +${event.performanceCount - 1} more date${event.performanceCount - 1 > 1 ? 's' : ''}`
                       : ''}
                   </div>
+                  {(event.onSaleDate || event.onsaleTBD) && (
+                    <div>
+                      <strong>Tickets On Sale:</strong>{' '}
+                      {event.onSaleDate
+                        ? new Date(event.onSaleDate).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : 'To be announced'}
+                    </div>
+                  )}
                 </div>
 
                 <div
