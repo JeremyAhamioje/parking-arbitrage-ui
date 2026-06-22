@@ -73,7 +73,7 @@ const TOOLS: Tool[] = [
     id: 'signals',
     name: 'Change Detection',
     desc: 'Real-time alerts for significant market changes. Get notified of 20%+ price spikes and 40%+ inventory drops instantly.',
-    image: 'https://res.cloudinary.com/dz6kxumoo/image/upload/v1780822375/download_19_ayug5p.jpg',
+    image: 'https://res.cloudinary.com/dz6kxumoo/image/upload/v1782156352/copy_of_download_19_ayug5p.jpg',
     status: 'live' as const,
     route: '/learn/change-detection',
     buttonText: 'View Alerts',

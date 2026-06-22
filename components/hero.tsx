@@ -7,9 +7,24 @@ import TrendHeroGraph, { HERO_COLORS } from './trend-hero-graph'
 // now driving the hero text carousel. The heading stays constant; these rotate.
 // `img` is a placeholder for now — drop a real asset path in to swap it.
 const SLIDES = [
-  { title: 'Real-Time Data', desc: 'Live parking availability and pricing across all major platforms.', icon: '📊', img: '' },
-  { title: 'Sentiment Analysis', desc: 'Understand market trends through comprehensive event discovery.', icon: '🧭', img: '' },
-  { title: 'Insights', desc: 'Automated alerts for price changes and inventory fluctuations.', icon: '💡', img: '' },
+  {
+    title: 'Real-Time Data',
+    desc: 'Live parking availability and pricing across all major platforms.',
+    icon: '📊',
+    img: 'https://res.cloudinary.com/dz6kxumoo/image/upload/v1781432142/Gemini_Generated_Image_szst0gszst0gszst_w4ofxd.png',
+  },
+  {
+    title: 'Sentiment Analysis',
+    desc: 'Understand market trends through comprehensive event discovery.',
+    icon: '🧭',
+    img: 'https://res.cloudinary.com/dz6kxumoo/image/upload/v1780821869/Gemini_Generated_Image_2t14ip2t14ip2t14_b7hrrj.png',
+  },
+  {
+    title: 'Insights',
+    desc: 'Automated alerts for price changes and inventory fluctuations.',
+    icon: '💡',
+    img: 'https://res.cloudinary.com/dz6kxumoo/image/upload/v1782156352/copy_of_download_19_ayug5p.jpg',
+  },
 ]
 
 export default function Hero() {
@@ -55,48 +70,36 @@ export default function Hero() {
           </div>
 
           <div className="hero-carousel-foot">
-            <div className="hero-dots" role="tablist" aria-label="Highlights">
-              {SLIDES.map((s, i) => (
-                <button
-                  key={s.title}
-                  className={`hero-dot ${i === slide ? 'active' : ''}`}
-                  aria-label={s.title}
-                  aria-selected={i === slide}
-                  role="tab"
-                  onClick={() => setSlide(i)}
-                />
-              ))}
+            {/* Graph control — series dots + master play/pause (freezes slides + sweep) */}
+            <div className="hero-graphctl">
+              <div className="gdots" role="tablist" aria-label="Graph series">
+                {HERO_COLORS.map((c, i) => (
+                  <button
+                    key={c}
+                    className={`gdot ${i === graphColor ? 'active' : ''}`}
+                    style={{ ['--gc' as string]: c }}
+                    aria-label={`Series ${i + 1}`}
+                    aria-selected={i === graphColor}
+                    role="tab"
+                    onClick={() => setGraphColor(i)}
+                  />
+                ))}
+              </div>
+              <button className="pausebtn" aria-label={paused ? 'Play' : 'Pause'} onClick={() => setPaused((p) => !p)}>
+                {paused ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="5" width="4" height="14" rx="1" />
+                    <rect x="14" y="5" width="4" height="14" rx="1" />
+                  </svg>
+                )}
+              </button>
             </div>
             <button className="explore-btn" onClick={scrollToTools}>Explore</button>
           </div>
         </div>
 
-        {/* Graph control — the colored dots track the sweeping line; pause stops it */}
-        <div className="hero-graphctl">
-          <div className="gdots" role="tablist" aria-label="Graph series">
-            {HERO_COLORS.map((c, i) => (
-              <button
-                key={c}
-                className={`gdot ${i === graphColor ? 'active' : ''}`}
-                style={{ ['--gc' as string]: c }}
-                aria-label={`Series ${i + 1}`}
-                aria-selected={i === graphColor}
-                role="tab"
-                onClick={() => setGraphColor(i)}
-              />
-            ))}
-          </div>
-          <button className="pausebtn" aria-label={paused ? 'Play' : 'Pause'} onClick={() => setPaused((p) => !p)}>
-            {paused ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="5" width="4" height="14" rx="1" />
-                <rect x="14" y="5" width="4" height="14" rx="1" />
-              </svg>
-            )}
-          </button>
-        </div>
       </div>
     </header>
   )
