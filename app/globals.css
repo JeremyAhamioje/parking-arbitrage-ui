@@ -195,7 +195,7 @@ nav {
 /* HERO */
 .hero {
   position: relative;
-  min-height: 460px;
+  min-height: 580px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -331,18 +331,28 @@ nav {
   gap: 24px;
 }
 
+/* Bordered card — the active slide's image + text fade in/out inside it */
 .hslides {
   position: relative;
   width: 100%;
-  min-height: 150px;
+  min-height: 168px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .hslide {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 22px 26px;
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 0.6s, transform 0.6s;
+  transition: opacity 0.55s, transform 0.55s;
   pointer-events: none;
 }
 
@@ -352,18 +362,44 @@ nav {
   pointer-events: auto;
 }
 
-.hslide h3 {
-  font-size: 34px;
-  font-weight: 700;
-  letter-spacing: -0.8px;
-  margin-bottom: 12px;
+/* Placeholder image box — swap the emoji for a real <img> via SLIDES[].img */
+.hslide-img {
+  flex: 0 0 auto;
+  width: 104px;
+  height: 104px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--blue) 12%, var(--surface));
 }
 
-.hslide p {
-  font-size: 18px;
+.hslide-img[data-i="1"] { background: color-mix(in srgb, var(--green) 14%, var(--surface)); }
+.hslide-img[data-i="2"] { background: color-mix(in srgb, #a142f4 14%, var(--surface)); }
+
+.hslide-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hslide-text {
+  min-width: 0;
+}
+
+.hslide-text h3 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  margin-bottom: 8px;
+}
+
+.hslide-text p {
+  font-size: 16px;
   line-height: 1.5;
   color: var(--text-2);
-  max-width: 470px;
 }
 
 .hero-carousel-foot {
@@ -394,58 +430,36 @@ nav {
   border-radius: 999px;
 }
 
-.hero-caption-wrap {
-  position: relative;
-}
-
-.hero-caption {
-  position: absolute;
-  left: 0;
-  bottom: 34px;
-  z-index: 2;
+/* Graph control — colored series dots track the sweeping line; pause stops it.
+   Replaces the old static "Search interest, past 24 hours" caption. */
+.hero-graphctl {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
+  margin-top: 2px;
 }
 
-.hero-caption .cap {
-  font-size: 13px;
-  color: var(--text-2);
-}
-
-.dots {
+.gdots {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 
-.dots .d {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.gdot {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  border-radius: 999px;
+  background: var(--gc, var(--blue));
+  opacity: 0.4;
+  transition: width 0.3s ease, opacity 0.3s ease;
 }
 
-.dots .d.bar {
-  width: 42px;
-  border-radius: 5px;
-  background: var(--blue);
-}
-
-.dots .d.c1 {
-  background: var(--red);
-}
-
-.dots .d.c2 {
-  background: var(--green);
-}
-
-.dots .d.c3 {
-  background: #a142f4;
-}
-
-.dots .d.c4 {
-  background: var(--red);
-  opacity: 0.7;
+.gdot.active {
+  width: 34px;
+  opacity: 1;
 }
 
 .pausebtn {
@@ -996,5 +1010,24 @@ footer {
 
   .hero-head h1 {
     font-size: 36px;
+  }
+
+  .hslide {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .hslide-img {
+    width: 72px;
+    height: 72px;
+    font-size: 30px;
+  }
+
+  .hslide-text h3 {
+    font-size: 22px;
+  }
+
+  .hslide-text p {
+    font-size: 14.5px;
   }
 }

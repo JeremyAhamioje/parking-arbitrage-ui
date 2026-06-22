@@ -1,31 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import TrendHeroGraph from './trend-hero-graph'
+import TrendHeroGraph, { HERO_COLORS } from './trend-hero-graph'
 
 // The three messages that used to live in "What can ParkingIntel do for you?",
-// now driving the hero carousel. The heading stays constant; these rotate.
+// now driving the hero text carousel. The heading stays constant; these rotate.
+// `img` is a placeholder for now — drop a real asset path in to swap it.
 const SLIDES = [
-  { title: 'Real-Time Data', desc: 'Live parking availability and pricing across all major platforms.' },
-  { title: 'Sentiment Analysis', desc: 'Understand market trends through comprehensive event discovery.' },
-  { title: 'Insights', desc: 'Automated alerts for price changes and inventory fluctuations.' },
+  { title: 'Real-Time Data', desc: 'Live parking availability and pricing across all major platforms.', icon: '📊', img: '' },
+  { title: 'Sentiment Analysis', desc: 'Understand market trends through comprehensive event discovery.', icon: '🧭', img: '' },
+  { title: 'Insights', desc: 'Automated alerts for price changes and inventory fluctuations.', icon: '💡', img: '' },
 ]
 
 export default function Hero() {
-  const [active, setActive] = useState(0)
+  const [slide, setSlide] = useState(0)        // text carousel (3 slides)
+  const [graphColor, setGraphColor] = useState(0) // animated graph color (4 lines)
   const [paused, setPaused] = useState(false)
 
+  // Auto-rotate the text slides (independent of the graph sweep).
   useEffect(() => {
     if (paused) return
-    const id = setInterval(() => setActive((i) => (i + 1) % SLIDES.length), 3600)
+    const id = setInterval(() => setSlide((i) => (i + 1) % SLIDES.length), 3600)
     return () => clearInterval(id)
   }, [paused])
 
   const scrollToTools = () => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })
+  const advanceGraph = () => setGraphColor((i) => (i + 1) % HERO_COLORS.length)
 
   return (
     <header className="hero">
-      <TrendHeroGraph />
+      <TrendHeroGraph active={graphColor} paused={paused} onAdvance={advanceGraph} />
 
       <div className="wrap hero-inner">
         <div className="hero-head">
@@ -35,11 +39,17 @@ export default function Hero() {
         </div>
 
         <div className="hero-carousel" role="group" aria-roledescription="carousel">
+          {/* Bordered card — the active slide's image + text swap inside it */}
           <div className="hslides">
             {SLIDES.map((s, i) => (
-              <div key={s.title} className={`hslide ${i === active ? 'show' : ''}`} aria-hidden={i !== active}>
-                <h3>{s.title}</h3>
-                <p>{s.desc}</p>
+              <div key={s.title} className={`hslide ${i === slide ? 'show' : ''}`} aria-hidden={i !== slide}>
+                <div className="hslide-img" data-i={i}>
+                  {s.img ? <img src={s.img} alt="" /> : <span aria-hidden>{s.icon}</span>}
+                </div>
+                <div className="hslide-text">
+                  <h3>{s.title}</h3>
+                  <p>{s.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -49,28 +59,32 @@ export default function Hero() {
               {SLIDES.map((s, i) => (
                 <button
                   key={s.title}
-                  className={`hero-dot ${i === active ? 'active' : ''}`}
+                  className={`hero-dot ${i === slide ? 'active' : ''}`}
                   aria-label={s.title}
-                  aria-selected={i === active}
+                  aria-selected={i === slide}
                   role="tab"
-                  onClick={() => setActive(i)}
+                  onClick={() => setSlide(i)}
                 />
               ))}
             </div>
             <button className="explore-btn" onClick={scrollToTools}>Explore</button>
           </div>
         </div>
-      </div>
 
-      <div className="wrap hero-caption-wrap">
-        <div className="hero-caption">
-          <span className="cap">Search interest, past 24 hours</span>
-          <div className="dots">
-            <span className="d c1" />
-            <span className="d bar" />
-            <span className="d c2" />
-            <span className="d c3" />
-            <span className="d c4" />
+        {/* Graph control — the colored dots track the sweeping line; pause stops it */}
+        <div className="hero-graphctl">
+          <div className="gdots" role="tablist" aria-label="Graph series">
+            {HERO_COLORS.map((c, i) => (
+              <button
+                key={c}
+                className={`gdot ${i === graphColor ? 'active' : ''}`}
+                style={{ ['--gc' as string]: c }}
+                aria-label={`Series ${i + 1}`}
+                aria-selected={i === graphColor}
+                role="tab"
+                onClick={() => setGraphColor(i)}
+              />
+            ))}
           </div>
           <button className="pausebtn" aria-label={paused ? 'Play' : 'Pause'} onClick={() => setPaused((p) => !p)}>
             {paused ? (
