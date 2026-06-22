@@ -130,15 +130,18 @@ export function PlatformChips({
   )
 }
 
-const COLUMNS: { key: keyof LiveRow; label: string; align?: 'right' }[] = [
-  { key: 'platform', label: 'Platform' },
-  { key: 'spot', label: 'Parking Spot' },
-  { key: 'address', label: 'Distance to venue' },
-  { key: 'price', label: 'Price', align: 'right' },
-  { key: 'availability', label: 'Availability' },
-  { key: 'event', label: 'Event' },
-  { key: 'date', label: 'Date' },
-  { key: 'confidence', label: 'Conf.', align: 'right' },
+// Explicit widths + table-layout:fixed so no single column can balloon and leave
+// the big empty gap (the spot column was absorbing all the leftover width in the
+// SpotHero/All view, where names are short). Widths sum to 100%.
+const COLUMNS: { key: keyof LiveRow; label: string; align?: 'right'; width: string; wrap?: boolean }[] = [
+  { key: 'platform', label: 'Platform', width: '8%' },
+  { key: 'spot', label: 'Parking Spot', width: '20%', wrap: true },
+  { key: 'address', label: 'Distance to venue', width: '22%', wrap: true },
+  { key: 'price', label: 'Price', align: 'right', width: '7%' },
+  { key: 'availability', label: 'Availability', width: '14%', wrap: true },
+  { key: 'event', label: 'Event', width: '14%', wrap: true },
+  { key: 'date', label: 'Date', width: '9%' },
+  { key: 'confidence', label: 'Conf.', align: 'right', width: '6%' },
 ]
 
 // Full XLSX/clipboard column order (the spec's 16 headers). Explicit so export
@@ -225,22 +228,36 @@ export function ResultsTable({
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-2)', border: '1px dashed var(--border)', borderRadius: '12px' }}>{emptyText}</div>
       ) : (
         <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+          <table style={{ width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ background: 'var(--bg)' }}>
                 {COLUMNS.map((c) => (
-                  <th key={String(c.key)} style={{ textAlign: c.align || 'left', padding: '10px 12px', color: 'var(--text-2)', fontWeight: 600, whiteSpace: 'nowrap', borderBottom: '1px solid var(--border)' }}>{c.label}</th>
+                  <th key={String(c.key)} style={{ width: c.width, textAlign: c.align || 'left', padding: '10px 12px', color: 'var(--text-2)', fontWeight: 600, whiteSpace: 'nowrap', borderBottom: '1px solid var(--border)' }}>{c.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {visibleRows.map((r, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                  {COLUMNS.map((c) => (
-                    <td key={String(c.key)} style={{ textAlign: c.align || 'left', padding: '10px 12px', color: 'var(--text)', whiteSpace: c.key === 'address' ? 'normal' : 'nowrap' }}>
-                      {c.key === 'address' ? locationLine(r) : fmt(c.key, r[c.key])}
-                    </td>
-                  ))}
+                  {COLUMNS.map((c) => {
+                    const content = c.key === 'address' ? locationLine(r)
+                      : c.key === 'availability' ? availabilityCell(r)
+                      : fmt(c.key, r[c.key])
+                    return (
+                      <td
+                        key={String(c.key)}
+                        title={!c.wrap && typeof content === 'string' ? content : undefined}
+                        style={{
+                          textAlign: c.align || 'left', padding: '10px 12px', color: 'var(--text)',
+                          whiteSpace: c.wrap ? 'normal' : 'nowrap',
+                          overflow: 'hidden', textOverflow: c.wrap ? 'clip' : 'ellipsis',
+                          wordBreak: c.wrap ? 'break-word' : 'normal',
+                        }}
+                      >
+                        {content}
+                      </td>
+                    )
+                  })}
                 </tr>
               ))}
             </tbody>
@@ -282,6 +299,20 @@ function locationLine(r: LiveRow) {
   const miles = (m / 1609.34).toFixed(1)
   const mins = Math.round(m / 69)
   return `${base} - ${miles} miles/${mins} minutes to the venue`
+}
+
+// Availability status + the live space count when the platform exposes one.
+// SpotHero returns available_spaces; ParkWhiz/Way return null → status only.
+function availabilityCell(r: LiveRow) {
+  const status = r.availability || '—'
+  const n = r.availableSpaces
+  // The engine already bakes the count into the status when a platform returns a
+  // count but no boolean (e.g. "12 spaces") — don't double it. Only append for the
+  // "Available"/"Sold Out" statuses that omit the number (SpotHero's case).
+  if (typeof n === 'number' && n >= 0 && !/\bspace/i.test(status)) {
+    return `${status} · ${n} space${n === 1 ? '' : 's'}`
+  }
+  return status
 }
 
 function fmt(key: keyof LiveRow, v: any) {
