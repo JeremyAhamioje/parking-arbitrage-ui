@@ -6,12 +6,31 @@ import { Bell, CheckCircle, AlertCircle, TrendingDown } from 'lucide-react'
 
 interface Alert {
   id: string
-  type: 'price_drop' | 'price_spike' | 'availability'
+  type: string
   venue: string
   message: string
   value: string
-  time: string
+  time?: string
+  createdAt?: string
+  window?: { from: string | null; to: string | null }
   read: boolean
+}
+
+// Format an ISO timestamp in the viewer's own timezone (e.g. "Jun 25, 3:00 AM").
+function fmtTime(iso?: string | null) {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return null
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+}
+
+// Show the two runs being compared (prev run → this run) when known, else the
+// single detection time — never a vague "just now".
+function rangeLabel(a: Alert) {
+  const from = fmtTime(a.window?.from)
+  const to = fmtTime(a.window?.to || a.createdAt || a.time)
+  if (from && to) return `${from} → ${to}`
+  return to || ''
 }
 
 export default function AlertsPage() {
@@ -38,6 +57,22 @@ export default function AlertsPage() {
 
   const unreadCount = alerts.filter((a) => !a.read).length
 
+  // Persist read state (alerts are NEVER deleted — they stay in "All Alerts").
+  // Tell the navbar bell to refresh its badge immediately.
+  const markAllRead = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/alerts/read`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      setAlerts((prev) => prev.map((a) => ({ ...a, read: true })))
+      window.dispatchEvent(new Event('alerts:refresh'))
+    } catch (error) {
+      console.error('Failed to mark alerts read:', error)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-white dark:bg-slate-950">
       <Header />
@@ -63,27 +98,37 @@ export default function AlertsPage() {
           </div>
         </div>
 
-        <div className="mb-6 flex gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === 'all'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            All Alerts
-          </button>
-          <button
-            onClick={() => setFilter('unread')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              filter === 'unread'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            Unread
-          </button>
+        <div className="mb-6 flex items-center justify-between gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === 'all'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              All Alerts
+            </button>
+            <button
+              onClick={() => setFilter('unread')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filter === 'unread'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              Unread
+            </button>
+          </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllRead}
+              className="px-4 py-2 rounded-lg font-medium text-sm bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              Mark all read
+            </button>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -105,6 +150,7 @@ export default function AlertsPage() {
                   case 'price_spike':
                     return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                   case 'availability':
+                  case 'availability_drop':
                     return <Bell className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                   default:
                     return null
@@ -125,8 +171,8 @@ export default function AlertsPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-semibold">{alert.venue}</h3>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {alert.time}
+                        <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          {rangeLabel(alert)}
                         </span>
                       </div>
                       <p className="text-sm text-slate-700 dark:text-slate-300 mb-2">
