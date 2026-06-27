@@ -25,6 +25,7 @@ export interface LiveRow {
   date?: string | null
   amenities?: string
   timestamp?: string
+  url?: string | null // deep link to the lot/event on the buying platform
 }
 
 export interface PlatformStatus {

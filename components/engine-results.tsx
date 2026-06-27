@@ -242,6 +242,7 @@ export function ResultsTable({
                   {COLUMNS.map((c) => {
                     const content = c.key === 'address' ? locationLine(r)
                       : c.key === 'availability' ? availabilityCell(r)
+                      : c.key === 'spot' ? spotCell(r)
                       : fmt(c.key, r[c.key])
                     return (
                       <td
@@ -299,6 +300,24 @@ function locationLine(r: LiveRow) {
   const miles = (m / 1609.34).toFixed(1)
   const mins = Math.round(m / 69)
   return `${base} - ${miles} miles/${mins} minutes to the venue`
+}
+
+// The parking-spot name, linked to the lot/event on the buying platform when the
+// engine resolved a URL (ParkWhiz + Way = exact lot, SpotHero = event page).
+function spotCell(r: LiveRow) {
+  const name = r.spot || '—'
+  if (!r.url) return name
+  return (
+    <a
+      href={r.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open this listing on the platform"
+      style={{ color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}
+    >
+      {name} <span style={{ fontSize: '11px', opacity: 0.7 }}>↗</span>
+    </a>
+  )
 }
 
 // Availability status + the live space count when the platform exposes one.
