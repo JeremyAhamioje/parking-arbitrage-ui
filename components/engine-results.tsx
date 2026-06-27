@@ -307,16 +307,30 @@ function locationLine(r: LiveRow) {
 function spotCell(r: LiveRow) {
   const name = r.spot || '—'
   if (!r.url) return name
+  // Way's lot page keeps the date in app state (not the URL), so it opens on TODAY —
+  // warn the clicker to set it to the event date so nobody books the wrong day.
+  // ParkWhiz/SpotHero links already carry the event context.
+  const isWay = r.platform === 'way'
+  const tip = isWay
+    ? `Way opens at today's date — set it to ${r.date || 'the event date'} before booking`
+    : 'Open this listing on the platform'
   return (
-    <a
-      href={r.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      title="Open this listing on the platform"
-      style={{ color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}
-    >
-      {name} <span style={{ fontSize: '11px', opacity: 0.7 }}>↗</span>
-    </a>
+    <span>
+      <a
+        href={r.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={tip}
+        style={{ color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}
+      >
+        {name} <span style={{ fontSize: '11px', opacity: 0.7 }}>↗</span>
+      </a>
+      {isWay && r.date && (
+        <span title={tip} style={{ display: 'block', fontSize: '10px', color: '#806600', fontWeight: 600, marginTop: '2px' }}>
+          ⚠ opens today — set to {r.date}
+        </span>
+      )}
+    </span>
   )
 }
 

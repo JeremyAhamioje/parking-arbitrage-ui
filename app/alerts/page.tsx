@@ -283,6 +283,11 @@ export default function AlertsPage() {
                             href={alert.listingUrl}
                             target="_blank"
                             rel="noopener noreferrer"
+                            title={
+                              alert.source === 'way'
+                                ? "Way opens at today's date — set it to the event date before booking"
+                                : 'Open this listing on the platform'
+                            }
                             className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                           >
                             <ExternalLink className="w-3 h-3" />
@@ -290,6 +295,15 @@ export default function AlertsPage() {
                               ? `Open lot on ${SOURCE_LABEL[alert.source || ''] || 'platform'}`
                               : `View event on ${SOURCE_LABEL[alert.source || ''] || 'platform'}`}
                           </a>
+                        )}
+                        {/* Way opens on today's date — nudge to set the event date */}
+                        {alert.listingUrl && alert.source === 'way' && (
+                          <span
+                            title="Way opens at today's date — set it to the event date before booking"
+                            className="text-[10px] font-semibold text-amber-700 dark:text-amber-400"
+                          >
+                            ⚠ set event date
+                          </span>
                         )}
                       </div>
                     </div>
