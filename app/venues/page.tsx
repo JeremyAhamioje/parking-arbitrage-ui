@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Header } from '@/components/header'
 import { VenueDetailModal } from '@/components/venue-detail-modal'
-import { MapPin, DollarSign, TrendingUp } from 'lucide-react'
+import { MapPin, DollarSign, TrendingUp, Plus } from 'lucide-react'
+import { addVenue } from '@/lib/engine'
 
 interface Venue {
   id: string
@@ -22,23 +23,51 @@ export default function VenuesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null)
   const [selectedVenueName, setSelectedVenueName] = useState<string>('')
+  // Add-venue form
+  const [newVenue, setNewVenue] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [addMsg, setAddMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const fetchVenues = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/venues`)
+      const data = await res.json()
+      setVenues(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('Failed to fetch venues:', error)
+      setVenues([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchVenues = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/venues`)
-        const data = await res.json()
-        setVenues(Array.isArray(data) ? data : [])
-      } catch (error) {
-        console.error('Failed to fetch venues:', error)
-        setVenues([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchVenues()
   }, [])
+
+  // Validate + dedupe happens server-side (the engine geocodes the name and
+  // checks the sheet); we just surface the outcome.
+  const handleAddVenue = async (e: FormEvent) => {
+    e.preventDefault()
+    const name = newVenue.trim()
+    if (!name || adding) return
+    setAdding(true)
+    setAddMsg(null)
+    try {
+      const r = await addVenue(name)
+      if (r.added) {
+        setAddMsg({ ok: true, text: `Added “${r.name}” — it’ll start tracking on the next scrape.` })
+        setNewVenue('')
+        fetchVenues() // the engine seeds the venues row, so it shows up right away
+      } else {
+        setAddMsg({ ok: false, text: r.reason || 'Could not add that venue.' })
+      }
+    } catch (err: any) {
+      setAddMsg({ ok: false, text: err?.message || 'Something went wrong — try again.' })
+    } finally {
+      setAdding(false)
+    }
+  }
 
   const filteredVenues = venues.filter(
     (v) =>
@@ -69,6 +98,36 @@ export default function VenuesPage() {
             Monitor parking across all tracked venues
           </p>
         </div>
+
+        {/* Add a venue to track — validated + dedup'd server-side */}
+        <form onSubmit={handleAddVenue} className="mb-3 flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Add a venue to track (e.g. State Farm Arena, Atlanta GA)"
+            value={newVenue}
+            onChange={(e) => setNewVenue(e.target.value)}
+            className="flex-1 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={adding || !newVenue.trim()}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            {adding ? 'Checking…' : 'Add venue'}
+          </button>
+        </form>
+        {addMsg && (
+          <div
+            className={`mb-4 text-sm px-4 py-3 rounded-lg ${
+              addMsg.ok
+                ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
+            }`}
+          >
+            {addMsg.text}
+          </div>
+        )}
 
         <div className="mb-6">
           <input

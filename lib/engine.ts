@@ -70,6 +70,28 @@ export const liveEvent = (p: { venue: string; event: string; date?: string; plat
 export const liveDate = (p: { venue: string; start: string; end: string; platforms?: string[] }) =>
   postJson<LiveResult>('/api/live/date', p)
 
+export interface AddVenueResult {
+  added: boolean
+  name: string
+  reason?: string
+  lat?: number
+  lon?: number
+}
+
+// Validate + dedupe-add a venue to the tracking sheet. Returns the result for the
+// expected outcomes — added (201), already-tracked (409), not-a-real-venue (422) —
+// all carry { added, reason }. Only throws on a 5xx / network failure.
+export async function addVenue(name: string): Promise<AddVenueResult> {
+  const res = await fetch(`${ENGINE_URL}/api/venues`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (res.status >= 500) throw new Error(data?.error || `Engine error (${res.status})`)
+  return data as AddVenueResult
+}
+
 export async function engineHealth(): Promise<{ ok: boolean; gemini: boolean } | null> {
   try {
     const res = await fetch(`${ENGINE_URL}/health`)
