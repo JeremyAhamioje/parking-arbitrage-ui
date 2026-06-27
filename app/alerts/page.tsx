@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/header'
-import { Bell, CheckCircle, AlertCircle, TrendingDown, Ban } from 'lucide-react'
+import { Bell, CheckCircle, AlertCircle, TrendingDown, Ban, ExternalLink } from 'lucide-react'
 
 interface Alert {
   id: string
@@ -16,7 +16,10 @@ interface Alert {
   source?: string | null
   context?: string | null
   signalType?: string | null
+  confidence?: string | null
   eventName?: string | null
+  listingUrl?: string | null
+  listingUrlKind?: 'exact' | 'event' | null
   read: boolean
 }
 
@@ -60,6 +63,16 @@ function provLabel(a: Alert) {
   const ctx = a.context === 'event' ? 'Event context' : 'Generic'
   const src = a.source ? SOURCE_LABEL[a.source] || a.source : null
   return src ? `${ctx} · ${src}` : ctx
+}
+
+// How much to trust a sold-out alert. 'confirmed' = direct platform signal
+// (SpotHero count→0). 'likely' = lot vanished while the rest of the event
+// scraped fine. 'unverified' = run looked partial, so it may be a scrape gap
+// rather than a real sellout — verify before pulling a StubHub listing.
+const CONFIDENCE: Record<string, { label: string; cls: string }> = {
+  confirmed:  { label: 'Confirmed',          cls: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' },
+  likely:     { label: 'Inferred',           cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
+  unverified: { label: 'Unverified · verify', cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 ring-1 ring-amber-400/60' },
 }
 
 const selectCls =
@@ -202,7 +215,10 @@ export default function AlertsPage() {
           ) : (
             filteredAlerts.map((alert) => {
               const isSoldOut = alert.signalType === 'SOLD_OUT' || alert.signalType === 'INVENTORY_THINNING'
+              const isUnverified = alert.confidence === 'unverified'
+              const conf = alert.confidence ? CONFIDENCE[alert.confidence] : null
               const getIcon = () => {
+                if (isUnverified) return <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 if (isSoldOut) return <Ban className="w-5 h-5 text-red-600 dark:text-red-400" />
                 switch (alert.type) {
                   case 'price_drop':
@@ -221,7 +237,9 @@ export default function AlertsPage() {
                 <div
                   key={alert.id}
                   className={`p-4 rounded-lg border transition-all ${
-                    isSoldOut
+                    isUnverified
+                      ? 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20'
+                      : isSoldOut
                       ? 'border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20'
                       : alert.read
                       ? 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30'
@@ -250,8 +268,28 @@ export default function AlertsPage() {
                         >
                           {provLabel(alert)}
                         </span>
+                        {/* confidence: how much to trust this sold-out signal */}
+                        {conf && (
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${conf.cls}`}>
+                            {conf.label}
+                          </span>
+                        )}
                         {!alert.read && (
                           <span className="text-xs px-2 py-1 bg-blue-500 text-white rounded">New</span>
+                        )}
+                        {/* deep link to the listing on the buying platform */}
+                        {alert.listingUrl && (
+                          <a
+                            href={alert.listingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {alert.listingUrlKind === 'exact'
+                              ? `Open lot on ${SOURCE_LABEL[alert.source || ''] || 'platform'}`
+                              : `View event on ${SOURCE_LABEL[alert.source || ''] || 'platform'}`}
+                          </a>
                         )}
                       </div>
                     </div>
