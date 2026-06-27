@@ -296,6 +296,13 @@ export default function AlertsPage() {
                               : `View event on ${SOURCE_LABEL[alert.source || ''] || 'platform'}`}
                           </a>
                         )}
+                        {/* Way lot pages open on TODAY's date — nudge to set the event date so
+                            nobody books the wrong day (the unfulfillable-order trap). */}
+                        {alert.source === 'way' && alert.listingUrl && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400">
+                            ⚠ opens at today’s date — set it to the event date
+                          </span>
+                        )}
                         {/* Way opens on today's date — nudge to set the event date */}
                         {alert.listingUrl && alert.source === 'way' && (
                           <span
