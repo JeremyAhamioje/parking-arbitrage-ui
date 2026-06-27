@@ -62,7 +62,9 @@ function rangeLabel(a: Alert) {
 function provLabel(a: Alert) {
   const ctx = a.context === 'event' ? 'Event context' : 'Generic'
   const src = a.source ? SOURCE_LABEL[a.source] || a.source : null
-  return src ? `${ctx} · ${src}` : ctx
+  const base = src ? `${ctx} · ${src}` : ctx
+  // Show WHICH event drove an event-context alert (was just "Event context · …").
+  return a.eventName ? `${base} · ${a.eventName}` : base
 }
 
 // How much to trust a sold-out alert. 'confirmed' = direct platform signal
