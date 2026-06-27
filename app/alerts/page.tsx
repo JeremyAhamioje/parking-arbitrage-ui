@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/header'
-import { Bell, CheckCircle, AlertCircle, TrendingDown, Ban, ExternalLink } from 'lucide-react'
+import { Bell, CheckCircle, AlertCircle, TrendingDown, TrendingUp, Ban, ExternalLink } from 'lucide-react'
 
 interface Alert {
   id: string
@@ -224,7 +224,7 @@ export default function AlertsPage() {
                   case 'price_drop':
                     return <TrendingDown className="w-5 h-5 text-green-600 dark:text-green-400" />
                   case 'price_spike':
-                    return <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    return <TrendingUp className="w-5 h-5 text-red-600 dark:text-red-400" />
                   case 'availability':
                   case 'availability_drop':
                     return <Bell className="w-5 h-5 text-orange-600 dark:text-orange-400" />
